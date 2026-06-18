@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Gestió de Casa Ramos García</title>
+    <style>
+        :root {
+            --bg-body: #F2F2F7; --ios-blue: #007AFF; --ios-red: #FF3B30; --ios-orange: #FF9500;
+            --ios-black: #000000; --ios-gray: #8E8E93; --text-main: #172b4d; --text-sec: #5e6c84;
+        }
+
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; padding: 0; background-color: var(--bg-body); color: var(--text-main); padding-bottom: 80px; }
+
+        .app-header { background: white; padding: 12px 16px; font-weight: 700; font-size: 1.2rem; border-bottom: 1px solid #E5E5EA; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; }
+        .btn-export { position: absolute; right: 12px; background: transparent; border: none; color: var(--ios-blue); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+
+        .view { display: none; padding: 12px; animation: fadeIn 0.15s ease-in; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .segmented-control { display: flex; background: #E5E5EA; border-radius: 8px; padding: 2px; margin-bottom: 12px; }
+        .segmented-control button { flex: 1; background: transparent; border: none; padding: 8px 0; font-size: 14px; font-weight: 600; color: var(--text-main); border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .segmented-control button.active { background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+
+        .card { padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; transition: background-color 0.2s; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .card-title { font-weight: 600; margin: 0; font-size: 1.1rem; line-height: 1.2; word-break: break-word; }
+        
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+        .badge.importante { background-color: var(--ios-red); color: white; }
+        .badge.normal { background-color: rgba(0,0,0,0.08); color: inherit; }
+        
+        .card-meta { font-size: 14px; color: inherit; display: flex; justify-content: space-between; align-items: center; opacity: 0.9; }
+        .card-date-label { font-weight: 700; background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; }
+        .dark-text .card-date-label { background: rgba(255,255,255,0.2); }
+        
+        .urgency-black { background-color: var(--ios-black) !important; color: white !important; }
+        .urgency-red { background-color: var(--ios-red) !important; color: white !important; }
+        .urgency-orange { background-color: var(--ios-orange) !important; color: white !important; }
+
+        .card-actions { display: flex; gap: 6px; margin-top: 2px; align-items: center; }
+        .btn-action { padding: 5px 10px; border-radius: 4px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.6); color: var(--text-main); transition: 0.15s; }
+        .dark-text .btn-action { background: rgba(0,0,0,0.3); color: white; }
+        .btn-action.delete { color: var(--ios-red); }
+        .flex-spacer { flex-grow: 1; }
+
+        .shopping-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 8px; }
+        .shopping-table td { padding: 12px; border-bottom: 1px solid #E5E5EA; font-size: 16px; }
+        .shopping-table tr:last-child td { border-bottom: none; }
+        .shopping-table td.check-col { width: 40px; text-align: center; }
+        .shopping-item-text { width: 100%; word-break: break-word; }
+        .shopping-item-text.bought { text-decoration: line-through; color: var(--ios-gray); opacity: 0.6; }
+        .shopping-checkbox { width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--ios-gray); cursor: pointer; }
+
+        .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid rgba(0,0,0,0.1); display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 10; }
+        .tab-bar button { flex: 1; border: none; background: transparent; padding: 10px 0; font-size: 11px; font-weight: 600; color: var(--ios-gray); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .tab-bar button.active { color: var(--ios-blue); }
+        .tab-bar button svg { stroke: currentColor; transition: stroke 0.2s; }
+
+        .fab { position: fixed; bottom: 80px; right: 16px; width: 48px; height: 48px; background: var(--ios-blue); color: white; border: none; border-radius: 24px; font-size: 24px; box-shadow: 0 4px 10px rgba(0, 122, 255, 0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 9; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 100; display: flex; align-items: flex-end; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--bg-body); width: 100%; border-radius: 16px 16px 0 0; padding: 16px; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.15, 0.85, 0.35, 1); padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .modal-header h3 { margin: 0; font-size: 1.2rem; }
+        .btn-close { background: #E5E5EA; border: none; width: 28px; height: 28px; border-radius: 14px; font-weight: bold; color: var(--ios-gray); cursor: pointer; }
+
+        .form-group { background: #FFF; border-radius: 8px; padding: 2px 10px; margin-bottom: 12px; border: 1px solid #E5E5EA; }
+        .form-group input, .form-group select { width: 100%; border: none; padding: 12px 0; font-size: 16px; background: transparent; outline: none; color: var(--text-main); }
+        .form-group input:not(:last-child), .form-group select:not(:last-child) { border-bottom: 1px solid #E5E5EA; }
+        .form-group.inline-label { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; }
+        .form-group.inline-label input { width: 60px; text-align: center; border-bottom: none; background: var(--bg-body); border-radius: 6px; padding: 6px; }
+        
+        .btn-primary { background: var(--ios-blue); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+
+        .list-container { background: #FFF; border-radius: 8px; border: 1px solid #E5E5EA; margin-top: 12px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #E5E5EA; font-size: 16px; font-weight: 500; }
+        .list-item:last-child { border-bottom: none; }
+        .color-dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.15); }
+        
+        /* Indicador de càrrega */
+        #loader { text-align: center; padding: 20px; color: var(--ios-gray); font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <span>Gestió de Casa Ramos García</span>
+        <button class="btn-export" onclick="exportarAExcel()" title="Baixar dades en Excel">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        </button>
+    </header>
+
+    <div id="view-tareas" class="view active">
+        <div class="segmented-control">
+            <button id="seg-todo" class="active" onclick="setTaskFilter('todo')">Pendents</button>
+            <button id="seg-archived" onclick="setTaskFilter('archived')">Arxiu</button>
+            <button id="seg-shopping" onclick="setTaskFilter('shopping')">Llista Compra</button>
+        </div>
+
+        <div id="loader">Connectant a la base de dades...</div>
+        <div id="tasks-container" style="display: none;"></div>
+
+        <div id="shopping-container" style="display: none;">
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+                <div class="form-group" style="margin: 0; flex: 1;">
+                    <input type="text" id="new-shop-title" placeholder="Què cal comprar?">
+                </div>
+                <button onclick="addShoppingItem()" style="background: var(--ios-blue); color: white; border: none; border-radius: 8px; padding: 0 16px; height: 44px; font-weight: 600; font-size: 18px;">+</button>
+            </div>
+            <button onclick="clearAllShoppingItems()" style="background: #FFEBEA; color: var(--ios-red); border: none; width: 100%; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; margin-bottom: 8px;">🗑️ Eliminar tots els articles</button>
+            
+            <table class="shopping-table">
+                <tbody id="shopping-list-body"></tbody>
+            </table>
+        </div>
+
+        <button class="fab" id="main-fab" onclick="openModal()" style="display: none;">+</button>
+    </div>
+
+    <div id="view-personas" class="view">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <div class="form-group" style="margin: 0; flex: 1;">
+                <input type="text" id="new-person-name" placeholder="Nom...">
+            </div>
+            <input type="color" id="new-person-color" value="#D6EAF8" style="width: 44px; height: 44px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: transparent;">
+            <button onclick="addPerson()" style="background: var(--ios-blue); color: white; border: none; border-radius: 8px; padding: 0 16px; height: 44px; font-weight: 600;">Afegir</button>
+        </div>
+        <div class="list-container" id="people-list"></div>
+    </div>
+
+    <div id="view-ajustos" class="view">
+        <h3 style="margin-top: 0;">Configuració d'Avisos</h3>
+        <p style="font-size: 14px; color: var(--ios-gray); margin-bottom: 16px;">Defineix quants dies falten perquè la data d'una tasca canviï de color i pugi a dalt de la llista.</p>
+        
+        <div class="form-group inline-label">
+            <label style="font-weight: 500;">Dies per avís Taronja 🟠</label>
+            <input type="number" id="conf-orange" min="1" max="99">
+        </div>
+        <div class="form-group inline-label">
+            <label style="font-weight: 500;">Dies per avís Vermell 🔴</label>
+            <input type="number" id="conf-red" min="0" max="99">
+        </div>
+        
+        <button class="btn-primary" onclick="saveConfig()">Desar Configuració</button>
+    </div>
+
+    <nav class="tab-bar">
+        <button id="tab-tareas" class="active" onclick="switchTab('tareas')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Tasques
+        </button>
+        <button id="tab-personas" onclick="switchTab('personas')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Persones
+        </button>
+        <button id="tab-ajustos" onclick="switchTab('ajustos')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Ajustos
+        </button>
+    </nav>
+
+    <div class="modal-overlay" id="task-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Nova Tasca</h3>
+                <button class="btn-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="form-group">
+                <input type="text" id="task-title" placeholder="Què cal fer?">
+            </div>
+            <div class="form-group">
+                <select id="task-assignee"></select>
+                <input type="date" id="task-date">
+                <select id="task-priority">
+                    <option value="normal">Prioritat: Normal</option>
+                    <option value="importante">Prioritat: Important</option>
+                </select>
+            </div>
+            <button class="btn-primary" id="btn-save-task" onclick="saveTaskSubmit()">Desar Tasca</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // ENGANXA AQUÍ EL TEU FIREBASE CONFIG (El que has copiat al Pas 2)
+const firebaseConfig = {
+  apiKey: "AIzaSyDCnMQNdvnUOC3TiXgCJIv0GrQzI4fJ9f4",
+  authDomain: "casa-ramos-garcia.firebaseapp.com",
+  projectId: "casa-ramos-garcia",
+  storageBucket: "casa-ramos-garcia.firebasestorage.app",
+  messagingSenderId: "680009455272",
+  appId: "1:680009455272:web:21ac614fd6159b1309949d"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Utilitzarem un únic document per tota la casa per màxima eficiència a l'hora de consultar
+        const docRef = doc(db, "casa", "dades_generals");
+
+        // --- ESTAT GLOBAL ---
+        window.people = [{name: 'Jo', color: '#FFFFFF'}];
+        window.tasks = [];
+        window.shoppingItems = [];
+        window.config = { orange: 10, red: 3 };
+        window.currentFilter = 'todo'; 
+        window.editingTaskId = null;
+
+        // --- LECTURA EN TEMPS REAL ---
+        onSnapshot(docRef, (docSnap) => {
+            document.getElementById('loader').style.display = 'none';
+            if (currentFilter === 'todo' || currentFilter === 'archived') {
+                document.getElementById('tasks-container').style.display = 'block';
+                document.getElementById('main-fab').style.display = 'flex';
+            }
+            
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                window.people = data.people || [{name: 'Jo', color: '#FFFFFF'}];
+                window.tasks = data.tasks || [];
+                window.shoppingItems = data.shoppingItems || [];
+                window.config = data.config || { orange: 10, red: 3 };
+            }
+
+            // Actualitzem les vistes automàticament cada cop que algú fa un canvi
+            renderPeople();
+            loadConfigUI();
+            if (currentFilter === 'shopping') renderShoppingList();
+            else renderTasks();
+        });
+
+        // --- ESCRIPTURA ---
+        window.saveToStorage = function() {
+            setDoc(docRef, { 
+                people: window.people, 
+                tasks: window.tasks, 
+                shoppingItems: window.shoppingItems, 
+                config: window.config 
+            }).catch(error => console.error("Error sincronitzant amb Firebase:", error));
+        }
+
+        // --- CÀLCUL D'URGÈNCIA I ORDENACIÓ ---
+        function getUrgency(dateStr) {
+            if (!dateStr) return { level: 0, class: '' };
+            const taskDate = new Date(dateStr); taskDate.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0,0,0,0);
+            const diffDays = Math.ceil((taskDate - today) / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) return { level: 4, class: 'urgency-black' };
+            if (diffDays <= window.config.red) return { level: 3, class: 'urgency-red' };
+            if (diffDays <= window.config.orange) return { level: 2, class: 'urgency-orange' };
+            return { level: 1, class: '' };
+        }
+
+        // --- CONFIGURACIÓ ---
+        window.loadConfigUI = function() {
+            document.getElementById('conf-orange').value = window.config.orange;
+            document.getElementById('conf-red').value = window.config.red;
+        }
+
+        window.saveConfig = function() {
+            const orange = parseInt(document.getElementById('conf-orange').value);
+            const red = parseInt(document.getElementById('conf-red').value);
+            if (red >= orange) { alert("Els dies per a l'avís vermell han de ser menors que per al taronja."); return; }
+            window.config.orange = orange; window.config.red = red;
+            saveToStorage();
+            alert("Configuració desada correctament.");
+        }
+
+        // --- EXPORTAR A EXCEL ---
+        window.exportarAExcel = function() {
+            let csv = "\uFEFFTASQUES DE CASA\nTítol;Assignat;Data Prevista;Prioritat;Estat\n";
+            window.tasks.forEach(t => {
+                let statusStr = t.status === 'todo' ? 'Pendent' : 'Arxivat';
+                let priorityStr = t.priority === 'importante' ? 'Important' : 'Normal';
+                let titleClean = t.title.replace(/"/g, '""'); 
+                csv += `"${titleClean}";"${t.assignee}";"${formatDate(t.dueDate)}";"${priorityStr}";"${statusStr}"\n`;
+            });
+            csv += "\n\nLLISTA DE LA COMPRA\nArticle;Estat\n";
+            window.shoppingItems.forEach(item => {
+                let statusStr = item.bought ? 'Comprat' : 'Pendent';
+                let titleClean = item.title.replace(/"/g, '""');
+                csv += `"${titleClean}";"${statusStr}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Dades_Casa_Ramos_Garcia.csv";
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function getContrastColorClass(hexColor) {
+            if (!hexColor || hexColor === '#FFFFFF' || hexColor === '#ffffff') return '';
+            const hex = hexColor.replace('#', ''); if (hex.length !== 6) return '';
+            const r = parseInt(hex.substring(0, 2), 16), g = parseInt(hex.substring(2, 4), 16), b = parseInt(hex.substring(4, 6), 16);
+            return ((r * 299 + g * 587 + b * 114) / 1000 > 130) ? '' : 'dark-text';
+        }
+
+        // --- NAVEGACIÓ ---
+        window.switchTab = function(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            document.getElementById(`tab-${viewId}`).classList.add('active');
+            
+            if(viewId === 'tareas') {
+                if (currentFilter === 'shopping') window.renderShoppingList();
+                else window.renderTasks();
+            }
+            if(viewId === 'personas') window.renderPeople();
+            if(viewId === 'ajustos') window.loadConfigUI();
+        }
+
+        window.setTaskFilter = function(filter) {
+            window.currentFilter = filter;
+            document.querySelectorAll('.segmented-control button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`seg-${filter}`).classList.add('active');
+            
+            const tasksCont = document.getElementById('tasks-container');
+            const shopCont = document.getElementById('shopping-container');
+            const fab = document.getElementById('main-fab');
+
+            if (filter === 'shopping') {
+                tasksCont.style.display = 'none'; shopCont.style.display = 'block'; fab.style.display = 'none';
+                window.renderShoppingList();
+            } else {
+                tasksCont.style.display = 'block'; shopCont.style.display = 'none'; fab.style.display = 'flex';
+                window.renderTasks();
+            }
+        }
+
+        window.openModal = function(taskId = null) {
+            window.renderAssigneeOptions();
+            const titleInput = document.getElementById('task-title'), assigneeSelect = document.getElementById('task-assignee');
+            const dateInput = document.getElementById('task-date'), prioritySelect = document.getElementById('task-priority');
+            const modalTitle = document.getElementById('modal-title');
+
+            if (taskId) {
+                window.editingTaskId = taskId; modalTitle.innerText = "Editar Tasca";
+                const task = window.tasks.find(t => t.id === taskId);
+                if (task) { titleInput.value = task.title; assigneeSelect.value = task.assignee; dateInput.value = task.dueDate; prioritySelect.value = task.priority; }
+            } else {
+                window.editingTaskId = null; modalTitle.innerText = "Nova Tasca";
+                titleInput.value = ''; assigneeSelect.value = ''; dateInput.value = ''; prioritySelect.value = 'normal';
+            }
+            document.getElementById('task-modal').classList.add('show');
+            titleInput.focus();
+        }
+        
+        window.closeModal = function() { document.getElementById('task-modal').classList.remove('show'); window.editingTaskId = null; }
+
+        window.saveTaskSubmit = function() {
+            const title = document.getElementById('task-title').value.trim();
+            if (!title) return;
+            const assignee = document.getElementById('task-assignee').value, dueDate = document.getElementById('task-date').value, priority = document.getElementById('task-priority').value;
+
+            if (window.editingTaskId) {
+                const task = window.tasks.find(t => t.id === window.editingTaskId);
+                if (task) { Object.assign(task, {title, assignee, dueDate, priority}); }
+            } else {
+                window.tasks.push({ id: Date.now(), title, assignee, dueDate, priority, status: 'todo' });
+            }
+            window.saveToStorage();
+            window.closeModal();
+        }
+
+        window.updateTaskStatus = function(id, newStatus) {
+            const task = window.tasks.find(t => t.id === id);
+            if (task) { task.status = newStatus; window.saveToStorage(); }
+        }
+
+        window.deleteTask = function(id) {
+            if (confirm("Vols eliminar aquesta tasca definitivament?")) { window.tasks = window.tasks.filter(t => t.id !== id); window.saveToStorage(); }
+        }
+
+        window.renderTasks = function() {
+            const container = document.getElementById('tasks-container');
+            let filteredTasks = window.tasks.filter(t => t.status === window.currentFilter);
+            
+            filteredTasks.sort((a, b) => {
+                const urgA = getUrgency(a.dueDate).level; const urgB = getUrgency(b.dueDate).level;
+                if (urgA !== urgB) return urgB - urgA;
+                if (!a.dueDate) return 1; if (!b.dueDate) return -1;
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+
+            container.innerHTML = '';
+            if (filteredTasks.length === 0) { container.innerHTML = `<p style="text-align: center; color: var(--ios-gray); margin-top: 2rem; font-size: 15px;">No hi ha tasques aquí.</p>`; return; }
+
+            filteredTasks.forEach(task => {
+                const personObj = window.people.find(p => p.name === task.assignee);
+                const cardColor = personObj ? personObj.color : '#FFFFFF';
+                const contrastClass = getContrastColorClass(cardColor);
+                const urgency = getUrgency(task.dueDate);
+                
+                let dateHTML = '';
+                if (task.dueDate) {
+                    let icon = urgency.level === 4 ? '⚠️ ' : (urgency.level === 3 ? '🔴 ' : (urgency.level === 2 ? '🟠 ' : '📅 '));
+                    dateHTML = `<span class="card-date-label ${urgency.class}">${icon}${formatDate(task.dueDate)}</span>`;
+                }
+
+                let actionsHTML = window.currentFilter === 'todo' ? 
+                    `<button class="btn-action" onclick="openModal(${task.id})">Editar</button><div class="flex-spacer"></div><button class="btn-action" onclick="updateTaskStatus(${task.id}, 'archived')">Arxivar</button>` :
+                    `<button class="btn-action" onclick="updateTaskStatus(${task.id}, 'todo')">Desarxivar</button><div class="flex-spacer"></div><button class="btn-action delete" onclick="deleteTask(${task.id})">Eliminar</button>`;
+
+                container.innerHTML += `<div class="card ${contrastClass}" style="background-color: ${cardColor}; color: ${contrastClass ? '#FFFFFF' : 'var(--text-main)'};"><div class="card-header"><h4 class="card-title">${task.title}</h4><span class="badge ${task.priority}">${task.priority === 'importante' ? 'Important' : 'Normal'}</span></div><div class="card-meta"><span>👤 ${task.assignee || 'Sense assignar'}</span>${dateHTML}</div><div class="card-actions">${actionsHTML}</div></div>`;
+            });
+        }
+
+        // --- COMPRES ---
+        window.renderShoppingList = function() {
+            const tbody = document.getElementById('shopping-list-body'); tbody.innerHTML = '';
+            if (window.shoppingItems.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--ios-gray); padding: 20px;">Llista buida.</td></tr>`; return; }
+            window.shoppingItems.forEach(item => {
+                tbody.innerHTML += `<tr><td class="check-col"><input type="checkbox" class="shopping-checkbox" ${item.bought ? 'checked' : ''} onclick="toggleShoppingItem(${item.id})"></td><td><div class="shopping-item-text ${item.bought ? 'bought' : ''}">${item.title}</div></td><td class="action-col"><button onclick="deleteShoppingItem(${item.id})" style="background: none; border: none; color: var(--ios-red); font-size: 16px; cursor: pointer; padding: 4px;">✕</button></td></tr>`;
+            });
+        }
+        window.addShoppingItem = function() {
+            const input = document.getElementById('new-shop-title'); const title = input.value.trim();
+            if (!title) return;
+            window.shoppingItems.push({ id: Date.now(), title, bought: false }); window.saveToStorage(); input.value = '';
+        }
+        document.getElementById('new-shop-title')?.addEventListener('keypress', e => { if (e.key === 'Enter') window.addShoppingItem(); });
+        window.toggleShoppingItem = function(id) { const item = window.shoppingItems.find(i => i.id === id); if (item) { item.bought = !item.bought; window.saveToStorage(); } }
+        window.deleteShoppingItem = function(id) { window.shoppingItems = window.shoppingItems.filter(i => i.id !== id); window.saveToStorage(); }
+        window.clearAllShoppingItems = function() { if (confirm("Buidar tota la llista?")) { window.shoppingItems = []; window.saveToStorage(); } }
+
+        // --- PERSONES ---
+        window.renderPeople = function() {
+            const list = document.getElementById('people-list'); list.innerHTML = '';
+            window.people.forEach((p, index) => {
+                list.innerHTML += `<div class="list-item"><div><span class="color-dot" style="background-color: ${p.color}"></span>${p.name}</div><button onclick="removePerson(${index})" style="background: none; border: none; color: var(--ios-red); font-size: 16px; cursor: pointer; padding: 4px;">✕</button></div>`;
+            });
+            window.renderAssigneeOptions();
+        }
+        window.addPerson = function() {
+            const input = document.getElementById('new-person-name'), colorInput = document.getElementById('new-person-color'), name = input.value.trim(), color = colorInput.value;
+            if (name && !window.people.find(p => p.name === name)) { window.people.push({ name, color }); window.saveToStorage(); input.value = ''; colorInput.value = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0'); }
+        }
+        window.removePerson = function(index) {
+            if (confirm(`Vols treure a ${window.people[index].name}?`)) { window.people.splice(index, 1); window.saveToStorage(); }
+        }
+        window.renderAssigneeOptions = function() {
+            const select = document.getElementById('task-assignee'); select.innerHTML = '<option value="">Assignar a...</option>';
+            window.people.forEach(p => { select.innerHTML += `<option value="${p.name}">${p.name}</option>`; });
+        }
+
+        function formatDate(dateStr) { if (!dateStr) return ''; const [y, m, d] = dateStr.split('-'); return `${d}/${m}/${y}`; }
+
+    </script>
+</body>
+</html>
