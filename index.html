@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Gestió de Casa Ramos García</title>
+    <title>Gestió de Casa Ramos García v1.2</title>
     <style>
         :root {
             --bg-body: #F2F2F7; --ios-blue: #007AFF; --ios-red: #FF3B30; --ios-orange: #FF9500;
@@ -23,6 +23,9 @@
         .segmented-control { display: flex; background: #E5E5EA; border-radius: 8px; padding: 2px; margin-bottom: 12px; }
         .segmented-control button { flex: 1; background: transparent; border: none; padding: 8px 0; font-size: 14px; font-weight: 600; color: var(--text-main); border-radius: 6px; cursor: pointer; transition: 0.2s; }
         .segmented-control button.active { background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+
+        .sort-control { margin-bottom: 12px; }
+        .sort-control select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #E5E5EA; background-color: #FFFFFF; font-size: 14px; font-weight: 500; color: var(--text-main); outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238E8E93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; }
 
         .card { padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; transition: background-color 0.2s; }
         .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -82,14 +85,13 @@
         .list-item:last-child { border-bottom: none; }
         .color-dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.15); }
         
-        /* Indicador de càrrega */
         #loader { text-align: center; padding: 20px; color: var(--ios-gray); font-size: 14px; }
     </style>
 </head>
 <body>
 
     <header class="app-header">
-        <span>Gestió de Casa Ramos García</span>
+        <span>Gestió de Casa v1.2</span>
         <button class="btn-export" onclick="exportarAExcel()" title="Baixar dades en Excel">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -104,6 +106,15 @@
             <button id="seg-todo" class="active" onclick="setTaskFilter('todo')">Pendents</button>
             <button id="seg-archived" onclick="setTaskFilter('archived')">Arxiu</button>
             <button id="seg-shopping" onclick="setTaskFilter('shopping')">Llista Compra</button>
+        </div>
+
+        <div id="sort-controls" class="sort-control" style="display: none;">
+            <select id="task-sort-select" onchange="setTaskSort(this.value)">
+                <option value="urgency">Ordenar per: Urgència (Per defecte)</option>
+                <option value="priority">Ordenar per: Prioritat (Important primer)</option>
+                <option value="date-asc">Ordenar per: Data (Més pròxima)</option>
+                <option value="date-desc">Ordenar per: Data (Més llunyana)</option>
+            </select>
         </div>
 
         <div id="loader">Connectant a la base de dades...</div>
@@ -193,20 +204,18 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // ENGANXA AQUÍ EL TEU FIREBASE CONFIG (El que has copiat al Pas 2)
-const firebaseConfig = {
-  apiKey: "AIzaSyDCnMQNdvnUOC3TiXgCJIv0GrQzI4fJ9f4",
-  authDomain: "casa-ramos-garcia.firebaseapp.com",
-  projectId: "casa-ramos-garcia",
-  storageBucket: "casa-ramos-garcia.firebasestorage.app",
-  messagingSenderId: "680009455272",
-  appId: "1:680009455272:web:21ac614fd6159b1309949d"
-};
+        // ENGANXA AQUÍ EL TEU FIREBASE CONFIG
+        const firebaseConfig = {
+          apiKey: "AIzaSyDCnMQNdvnUOC3TiXgCJIv0GrQzI4fJ9f4",
+          authDomain: "casa-ramos-garcia.firebaseapp.com",
+          projectId: "casa-ramos-garcia",
+          storageBucket: "casa-ramos-garcia.firebasestorage.app",
+          messagingSenderId: "680009455272",
+          appId: "1:680009455272:web:21ac614fd6159b1309949d"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // Utilitzarem un únic document per tota la casa per màxima eficiència a l'hora de consultar
         const docRef = doc(db, "casa", "dades_generals");
 
         // --- ESTAT GLOBAL ---
@@ -215,6 +224,7 @@ const firebaseConfig = {
         window.shoppingItems = [];
         window.config = { orange: 10, red: 3 };
         window.currentFilter = 'todo'; 
+        window.currentSort = 'urgency'; // Nou estat per l'ordenació
         window.editingTaskId = null;
 
         // --- LECTURA EN TEMPS REAL ---
@@ -222,6 +232,7 @@ const firebaseConfig = {
             document.getElementById('loader').style.display = 'none';
             if (currentFilter === 'todo' || currentFilter === 'archived') {
                 document.getElementById('tasks-container').style.display = 'block';
+                document.getElementById('sort-controls').style.display = 'block';
                 document.getElementById('main-fab').style.display = 'flex';
             }
             
@@ -233,7 +244,6 @@ const firebaseConfig = {
                 window.config = data.config || { orange: 10, red: 3 };
             }
 
-            // Actualitzem les vistes automàticament cada cop que algú fa un canvi
             renderPeople();
             loadConfigUI();
             if (currentFilter === 'shopping') renderShoppingList();
@@ -250,7 +260,7 @@ const firebaseConfig = {
             }).catch(error => console.error("Error sincronitzant amb Firebase:", error));
         }
 
-        // --- CÀLCUL D'URGÈNCIA I ORDENACIÓ ---
+        // --- CÀLCUL D'URGÈNCIA ---
         function getUrgency(dateStr) {
             if (!dateStr) return { level: 0, class: '' };
             const taskDate = new Date(dateStr); taskDate.setHours(0,0,0,0);
@@ -307,7 +317,7 @@ const firebaseConfig = {
             return ((r * 299 + g * 587 + b * 114) / 1000 > 130) ? '' : 'dark-text';
         }
 
-        // --- NAVEGACIÓ ---
+        // --- NAVEGACIÓ I ORDENACIÓ ---
         window.switchTab = function(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
@@ -322,6 +332,11 @@ const firebaseConfig = {
             if(viewId === 'ajustos') window.loadConfigUI();
         }
 
+        window.setTaskSort = function(sortType) {
+            window.currentSort = sortType;
+            window.renderTasks();
+        }
+
         window.setTaskFilter = function(filter) {
             window.currentFilter = filter;
             document.querySelectorAll('.segmented-control button').forEach(b => b.classList.remove('active'));
@@ -329,13 +344,16 @@ const firebaseConfig = {
             
             const tasksCont = document.getElementById('tasks-container');
             const shopCont = document.getElementById('shopping-container');
+            const sortCont = document.getElementById('sort-controls');
             const fab = document.getElementById('main-fab');
 
             if (filter === 'shopping') {
                 tasksCont.style.display = 'none'; shopCont.style.display = 'block'; fab.style.display = 'none';
+                if(sortCont) sortCont.style.display = 'none';
                 window.renderShoppingList();
             } else {
                 tasksCont.style.display = 'block'; shopCont.style.display = 'none'; fab.style.display = 'flex';
+                if(sortCont) sortCont.style.display = 'block';
                 window.renderTasks();
             }
         }
@@ -388,7 +406,20 @@ const firebaseConfig = {
             const container = document.getElementById('tasks-container');
             let filteredTasks = window.tasks.filter(t => t.status === window.currentFilter);
             
+            // Nova lògica d'ordenació combinada
             filteredTasks.sort((a, b) => {
+                if (window.currentSort === 'priority') {
+                    if (a.priority === 'importante' && b.priority !== 'importante') return -1;
+                    if (b.priority === 'importante' && a.priority !== 'importante') return 1;
+                } else if (window.currentSort === 'date-asc') {
+                    if (!a.dueDate) return 1; if (!b.dueDate) return -1;
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                } else if (window.currentSort === 'date-desc') {
+                    if (!a.dueDate) return 1; if (!b.dueDate) return -1;
+                    return new Date(b.dueDate) - new Date(a.dueDate);
+                }
+                
+                // Fallback a "urgency" si les prioritàries són iguals o si la sort és 'urgency' per defecte
                 const urgA = getUrgency(a.dueDate).level; const urgB = getUrgency(b.dueDate).level;
                 if (urgA !== urgB) return urgB - urgA;
                 if (!a.dueDate) return 1; if (!b.dueDate) return -1;
