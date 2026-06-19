@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Gestió de Casa Ramos García v1.2</title>
+    <title>Gestió de Casa Ramos García v1.4</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         :root {
             --bg-body: #F2F2F7; --ios-blue: #007AFF; --ios-red: #FF3B30; --ios-orange: #FF9500;
@@ -21,11 +24,28 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .segmented-control { display: flex; background: #E5E5EA; border-radius: 8px; padding: 2px; margin-bottom: 12px; }
-        .segmented-control button { flex: 1; background: transparent; border: none; padding: 8px 0; font-size: 14px; font-weight: 600; color: var(--text-main); border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .segmented-control button { flex: 1; background: transparent; border: none; padding: 8px 0; font-size: 13px; font-weight: 600; color: var(--text-main); border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
         .segmented-control button.active { background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
 
         .sort-control { margin-bottom: 12px; }
         .sort-control select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #E5E5EA; background-color: #FFFFFF; font-size: 14px; font-weight: 500; color: var(--text-main); outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05); appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238E8E93%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 12px top 50%; background-size: 12px auto; }
+
+        /* Estils del Calendari */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .calendar-header button { background: #E5E5EA; border: none; font-size: 1.1rem; cursor: pointer; color: var(--ios-black); width: 32px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .calendar-day-name { font-size: 12px; font-weight: 700; color: var(--ios-gray); margin-bottom: 4px; text-transform: uppercase; }
+        .calendar-day { padding: 6px 2px; background: white; border-radius: 8px; border: 1px solid #E5E5EA; min-height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: pointer; transition: 0.2s; }
+        .calendar-day:active { transform: scale(0.95); }
+        .calendar-day.empty { background: transparent; border: none; cursor: default; }
+        .calendar-day.today { background: var(--ios-blue); color: white; border-color: var(--ios-blue); font-weight: bold; }
+        .calendar-day.selected { border: 2px solid var(--ios-black); background: #f0f0f0; }
+        .calendar-day.today.selected { border: 2px solid var(--ios-black); background: var(--ios-blue); }
+        .task-dots { display: flex; gap: 3px; margin-top: 6px; height: 6px; justify-content: center; width: 100%; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; }
+        .dot.importante { background: var(--ios-red); }
+        .dot.normal { background: var(--ios-gray); }
+        .calendar-day.today .dot.normal { background: rgba(255,255,255,0.8); }
 
         .card { padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; transition: background-color 0.2s; }
         .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -91,8 +111,8 @@
 <body>
 
     <header class="app-header">
-        <span>Gestió de Casa v1.2</span>
-        <button class="btn-export" onclick="exportarAExcel()" title="Baixar dades en Excel">
+        <span>Gestió de Casa v1.4</span>
+        <button class="btn-export" onclick="exportarAExcel()" title="Baixar dades en Excel (Backup complet)">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
@@ -105,7 +125,8 @@
         <div class="segmented-control">
             <button id="seg-todo" class="active" onclick="setTaskFilter('todo')">Pendents</button>
             <button id="seg-archived" onclick="setTaskFilter('archived')">Arxiu</button>
-            <button id="seg-shopping" onclick="setTaskFilter('shopping')">Llista Compra</button>
+            <button id="seg-shopping" onclick="setTaskFilter('shopping')">Llista</button>
+            <button id="seg-calendar" onclick="setTaskFilter('calendar')">🗓️ Calendari</button>
         </div>
 
         <div id="sort-controls" class="sort-control" style="display: none;">
@@ -132,6 +153,23 @@
             <table class="shopping-table">
                 <tbody id="shopping-list-body"></tbody>
             </table>
+        </div>
+
+        <div id="calendar-container" style="display: none;">
+            <div class="calendar-header">
+                <button onclick="changeCalMonth(-1)">&#8592;</button>
+                <h3 id="cal-month-year" style="margin:0; font-size: 1.1rem;"></h3>
+                <button onclick="changeCalMonth(1)">&#8594;</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-day-name">Dl</div><div class="calendar-day-name">Dt</div>
+                <div class="calendar-day-name">Dc</div><div class="calendar-day-name">Dj</div>
+                <div class="calendar-day-name">Dv</div><div class="calendar-day-name">Ds</div>
+                <div class="calendar-day-name">Dg</div>
+            </div>
+            <div class="calendar-grid" id="cal-grid"></div>
+            
+            <div id="cal-selected-tasks" style="margin-top: 16px;"></div>
         </div>
 
         <button class="fab" id="main-fab" onclick="openModal()" style="display: none;">+</button>
@@ -224,8 +262,12 @@
         window.shoppingItems = [];
         window.config = { orange: 10, red: 3 };
         window.currentFilter = 'todo'; 
-        window.currentSort = 'urgency'; // Nou estat per l'ordenació
+        window.currentSort = 'urgency'; 
         window.editingTaskId = null;
+
+        // Variables de Calendari
+        window.calCurrentDate = new Date();
+        window.calSelectedDateStr = null;
 
         // --- LECTURA EN TEMPS REAL ---
         onSnapshot(docRef, (docSnap) => {
@@ -247,6 +289,7 @@
             renderPeople();
             loadConfigUI();
             if (currentFilter === 'shopping') renderShoppingList();
+            else if (currentFilter === 'calendar') { renderCalendar(); renderCalendarTasks(); }
             else renderTasks();
         });
 
@@ -288,26 +331,60 @@
             alert("Configuració desada correctament.");
         }
 
-        // --- EXPORTAR A EXCEL ---
+        // --- EXPORTAR A EXCEL (v1.4 MULTIPESTANYA) ---
         window.exportarAExcel = function() {
-            let csv = "\uFEFFTASQUES DE CASA\nTítol;Assignat;Data Prevista;Prioritat;Estat\n";
+            if (typeof XLSX === 'undefined') {
+                alert("La llibreria d'Excel encara s'està carregant. Si us plau, espera un segon i torna-ho a provar.");
+                return;
+            }
+
+            // 1. Preparar dades de Tasques
+            const tasquesData = [["ID", "Títol", "Assignat", "Data Prevista", "Prioritat", "Estat"]];
             window.tasks.forEach(t => {
-                let statusStr = t.status === 'todo' ? 'Pendent' : 'Arxivat';
-                let priorityStr = t.priority === 'importante' ? 'Important' : 'Normal';
-                let titleClean = t.title.replace(/"/g, '""'); 
-                csv += `"${titleClean}";"${t.assignee}";"${formatDate(t.dueDate)}";"${priorityStr}";"${statusStr}"\n`;
+                tasquesData.push([
+                    t.id, 
+                    t.title, 
+                    t.assignee || '', 
+                    formatDate(t.dueDate) || '', 
+                    t.priority === 'importante' ? 'Important' : 'Normal', 
+                    t.status === 'todo' ? 'Pendent' : 'Arxivat'
+                ]);
             });
-            csv += "\n\nLLISTA DE LA COMPRA\nArticle;Estat\n";
+
+            // 2. Preparar dades de Llista de la Compra
+            const compraData = [["ID", "Article", "Estat"]];
             window.shoppingItems.forEach(item => {
-                let statusStr = item.bought ? 'Comprat' : 'Pendent';
-                let titleClean = item.title.replace(/"/g, '""');
-                csv += `"${titleClean}";"${statusStr}"\n`;
+                compraData.push([
+                    item.id, 
+                    item.title, 
+                    item.bought ? 'Comprat' : 'Pendent'
+                ]);
             });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "Dades_Casa_Ramos_Garcia.csv";
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+
+            // 3. Preparar dades de Persones
+            const personesData = [["Nom", "Color (HEX)"]];
+            window.people.forEach(p => {
+                personesData.push([p.name, p.color]);
+            });
+
+            // 4. Preparar dades d'Ajustos
+            const ajustosData = [
+                ["Paràmetre", "Valor (Dies)"],
+                ["Dies Avís Taronja", window.config.orange],
+                ["Dies Avís Vermell", window.config.red]
+            ];
+
+            // Crear el llibre d'Excel
+            const wb = XLSX.utils.book_new();
+
+            // Convertir els arrays a Fulls i afegir-los al llibre
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(tasquesData), "Tasques");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(compraData), "Llista Compra");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(personesData), "Persones");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ajustosData), "Ajustos");
+
+            // Generar i descarregar l'arxiu Excel (.xlsx real)
+            XLSX.writeFile(wb, "Copia_Seguretat_Casa.xlsx");
         }
 
         function getContrastColorClass(hexColor) {
@@ -326,6 +403,7 @@
             
             if(viewId === 'tareas') {
                 if (currentFilter === 'shopping') window.renderShoppingList();
+                else if (currentFilter === 'calendar') { window.renderCalendar(); window.renderCalendarTasks(); }
                 else window.renderTasks();
             }
             if(viewId === 'personas') window.renderPeople();
@@ -345,14 +423,20 @@
             const tasksCont = document.getElementById('tasks-container');
             const shopCont = document.getElementById('shopping-container');
             const sortCont = document.getElementById('sort-controls');
+            const calCont = document.getElementById('calendar-container');
             const fab = document.getElementById('main-fab');
 
             if (filter === 'shopping') {
-                tasksCont.style.display = 'none'; shopCont.style.display = 'block'; fab.style.display = 'none';
+                tasksCont.style.display = 'none'; shopCont.style.display = 'block'; calCont.style.display = 'none'; fab.style.display = 'none';
                 if(sortCont) sortCont.style.display = 'none';
                 window.renderShoppingList();
+            } else if (filter === 'calendar') {
+                tasksCont.style.display = 'none'; shopCont.style.display = 'none'; calCont.style.display = 'block'; fab.style.display = 'none';
+                if(sortCont) sortCont.style.display = 'none';
+                window.renderCalendar();
+                window.renderCalendarTasks();
             } else {
-                tasksCont.style.display = 'block'; shopCont.style.display = 'none'; fab.style.display = 'flex';
+                tasksCont.style.display = 'block'; shopCont.style.display = 'none'; calCont.style.display = 'none'; fab.style.display = 'flex';
                 if(sortCont) sortCont.style.display = 'block';
                 window.renderTasks();
             }
@@ -371,6 +455,10 @@
             } else {
                 window.editingTaskId = null; modalTitle.innerText = "Nova Tasca";
                 titleInput.value = ''; assigneeSelect.value = ''; dateInput.value = ''; prioritySelect.value = 'normal';
+                
+                if (window.currentFilter === 'calendar' && window.calSelectedDateStr) {
+                    dateInput.value = window.calSelectedDateStr;
+                }
             }
             document.getElementById('task-modal').classList.add('show');
             titleInput.focus();
@@ -402,11 +490,30 @@
             if (confirm("Vols eliminar aquesta tasca definitivament?")) { window.tasks = window.tasks.filter(t => t.id !== id); window.saveToStorage(); }
         }
 
+        // --- LÒGICA DE RENDERITZAT DE TARGETES ---
+        function renderTaskCard(task) {
+            const personObj = window.people.find(p => p.name === task.assignee);
+            const cardColor = personObj ? personObj.color : '#FFFFFF';
+            const contrastClass = getContrastColorClass(cardColor);
+            const urgency = getUrgency(task.dueDate);
+            
+            let dateHTML = '';
+            if (task.dueDate) {
+                let icon = urgency.level === 4 ? '⚠️ ' : (urgency.level === 3 ? '🔴 ' : (urgency.level === 2 ? '🟠 ' : '📅 '));
+                dateHTML = `<span class="card-date-label ${urgency.class}">${icon}${formatDate(task.dueDate)}</span>`;
+            }
+
+            let actionsHTML = task.status === 'todo' ? 
+                `<button class="btn-action" onclick="openModal(${task.id})">Editar</button><div class="flex-spacer"></div><button class="btn-action" onclick="updateTaskStatus(${task.id}, 'archived')">Arxivar</button>` :
+                `<button class="btn-action" onclick="updateTaskStatus(${task.id}, 'todo')">Desarxivar</button><div class="flex-spacer"></div><button class="btn-action delete" onclick="deleteTask(${task.id})">Eliminar</button>`;
+
+            return `<div class="card ${contrastClass}" style="background-color: ${cardColor}; color: ${contrastClass ? '#FFFFFF' : 'var(--text-main)'};"><div class="card-header"><h4 class="card-title">${task.title}</h4><span class="badge ${task.priority}">${task.priority === 'importante' ? 'Important' : 'Normal'}</span></div><div class="card-meta"><span>👤 ${task.assignee || 'Sense assignar'}</span>${dateHTML}</div><div class="card-actions">${actionsHTML}</div></div>`;
+        }
+
         window.renderTasks = function() {
             const container = document.getElementById('tasks-container');
             let filteredTasks = window.tasks.filter(t => t.status === window.currentFilter);
             
-            // Nova lògica d'ordenació combinada
             filteredTasks.sort((a, b) => {
                 if (window.currentSort === 'priority') {
                     if (a.priority === 'importante' && b.priority !== 'importante') return -1;
@@ -419,7 +526,6 @@
                     return new Date(b.dueDate) - new Date(a.dueDate);
                 }
                 
-                // Fallback a "urgency" si les prioritàries són iguals o si la sort és 'urgency' per defecte
                 const urgA = getUrgency(a.dueDate).level; const urgB = getUrgency(b.dueDate).level;
                 if (urgA !== urgB) return urgB - urgA;
                 if (!a.dueDate) return 1; if (!b.dueDate) return -1;
@@ -428,25 +534,88 @@
 
             container.innerHTML = '';
             if (filteredTasks.length === 0) { container.innerHTML = `<p style="text-align: center; color: var(--ios-gray); margin-top: 2rem; font-size: 15px;">No hi ha tasques aquí.</p>`; return; }
+            filteredTasks.forEach(task => { container.innerHTML += renderTaskCard(task); });
+        }
 
-            filteredTasks.forEach(task => {
-                const personObj = window.people.find(p => p.name === task.assignee);
-                const cardColor = personObj ? personObj.color : '#FFFFFF';
-                const contrastClass = getContrastColorClass(cardColor);
-                const urgency = getUrgency(task.dueDate);
+        // --- CALENDARI LÒGICA ---
+        window.changeCalMonth = function(dir) {
+            window.calCurrentDate.setMonth(window.calCurrentDate.getMonth() + dir);
+            window.renderCalendar();
+        }
+
+        window.selectCalDay = function(dateStr) {
+            window.calSelectedDateStr = dateStr;
+            window.renderCalendar(); 
+            window.renderCalendarTasks();
+        }
+
+        window.renderCalendarTasks = function() {
+            const container = document.getElementById('cal-selected-tasks');
+            if (!window.calSelectedDateStr) {
+                container.innerHTML = `<p style="text-align: center; color: var(--ios-gray); font-size: 14px;">Selecciona un dia per veure les tasques.</p>`;
+                return;
+            }
+
+            const dayTasks = window.tasks.filter(t => t.dueDate === window.calSelectedDateStr && t.status === 'todo');
+            let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <h4 style="margin:0; font-size:15px; color:var(--ios-blue);">Tasques per al ${formatDate(window.calSelectedDateStr)}</h4>
+                            <button onclick="openModal()" style="background:var(--ios-blue); color:white; border:none; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:12px;">+ Afegir</button>
+                        </div>`;
+            
+            if (dayTasks.length === 0) {
+                html += `<p style="text-align: center; color: var(--ios-gray); font-size: 14px; margin-top:20px;">No hi ha tasques per aquest dia.</p>`;
+            } else {
+                dayTasks.forEach(task => { html += renderTaskCard(task); });
+            }
+            container.innerHTML = html;
+        }
+
+        window.renderCalendar = function() {
+            const year = window.calCurrentDate.getFullYear();
+            const month = window.calCurrentDate.getMonth();
+            const today = new Date();
+            
+            const monthNames = ["Gener", "Febrer", "Març", "Abril", "Maig", "Juny", "Juliol", "Agost", "Setembre", "Octubre", "Novembre", "Desembre"];
+            document.getElementById('cal-month-year').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const emptyDays = firstDay === 0 ? 6 : firstDay - 1;
+
+            const grid = document.getElementById('cal-grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < emptyDays; i++) {
+                grid.innerHTML += `<div class="calendar-day empty"></div>`;
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                 
-                let dateHTML = '';
-                if (task.dueDate) {
-                    let icon = urgency.level === 4 ? '⚠️ ' : (urgency.level === 3 ? '🔴 ' : (urgency.level === 2 ? '🟠 ' : '📅 '));
-                    dateHTML = `<span class="card-date-label ${urgency.class}">${icon}${formatDate(task.dueDate)}</span>`;
-                }
+                let isToday = (i === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                let isSelected = (window.calSelectedDateStr === dateStr);
+                
+                let classes = "calendar-day";
+                if (isToday) classes += " today";
+                if (isSelected) classes += " selected";
 
-                let actionsHTML = window.currentFilter === 'todo' ? 
-                    `<button class="btn-action" onclick="openModal(${task.id})">Editar</button><div class="flex-spacer"></div><button class="btn-action" onclick="updateTaskStatus(${task.id}, 'archived')">Arxivar</button>` :
-                    `<button class="btn-action" onclick="updateTaskStatus(${task.id}, 'todo')">Desarxivar</button><div class="flex-spacer"></div><button class="btn-action delete" onclick="deleteTask(${task.id})">Eliminar</button>`;
+                let hasImportant = false;
+                let hasNormal = false;
+                window.tasks.forEach(t => {
+                    if (t.dueDate === dateStr && t.status === 'todo') {
+                        if (t.priority === 'importante') hasImportant = true;
+                        else hasNormal = true;
+                    }
+                });
 
-                container.innerHTML += `<div class="card ${contrastClass}" style="background-color: ${cardColor}; color: ${contrastClass ? '#FFFFFF' : 'var(--text-main)'};"><div class="card-header"><h4 class="card-title">${task.title}</h4><span class="badge ${task.priority}">${task.priority === 'importante' ? 'Important' : 'Normal'}</span></div><div class="card-meta"><span>👤 ${task.assignee || 'Sense assignar'}</span>${dateHTML}</div><div class="card-actions">${actionsHTML}</div></div>`;
-            });
+                let dotsHTML = '<div class="task-dots">';
+                if (hasImportant) dotsHTML += '<div class="dot importante"></div>';
+                if (hasNormal) dotsHTML += '<div class="dot normal"></div>';
+                dotsHTML += '</div>';
+
+                grid.innerHTML += `<div class="${classes}" onclick="selectCalDay('${dateStr}')">${i}${dotsHTML}</div>`;
+            }
         }
 
         // --- COMPRES ---
